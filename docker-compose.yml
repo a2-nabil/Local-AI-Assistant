@@ -1,0 +1,33 @@
+services:
+  # ১. Redis Database (Memory & Vector DB)
+  redis-db:
+    image: redis/redis-stack:latest
+    container_name: ai_vector_db
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+
+  # ২. AI Core Service (FastAPI)
+  ai-core:
+    build: 
+      context: ./ai_core
+    container_name: ai_core_service
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    # হোস্ট পিসির Ollama-এর সাথে কানেক্ট করার জন্য
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    depends_on:
+      - redis-db
+
+  # ৩. Telegram Client Service
+  telegram-client:
+    build: 
+      context: ./telegram_client
+    container_name: ui_telegram_client
+    restart: unless-stopped
+    depends_on:
+      - ai-core
+    env_file:
+      - .env
